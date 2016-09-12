@@ -1,2 +1,4 @@
 *.yml
 !circle.yml
+!example-vars.yml
+!example.yml

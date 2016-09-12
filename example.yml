@@ -1,0 +1,15 @@
+#cloud-config
+
+write_files:
+  - path: /home/user01/.bash_profile
+    content: |
+        export IP=REMOTE_IP
+        export ETCD_IP={{ .etcd.server_ip }}
+  - path: /etc/resolv.conf
+    content: |
+        nameserver {{ .dns.dns1_server_ip }}
+        nameserver {{ .dns.dns2_server_ip }}
+coreos:
+  units:
+    - name: systemd-timesyncd.service
+      command: start
