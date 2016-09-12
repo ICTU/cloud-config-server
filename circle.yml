@@ -1,0 +1,20 @@
+machine:
+  services:
+    - docker
+
+dependencies:
+  override:
+    - echo "no install"
+
+test:
+  override:
+    - echo "no tests!"
+
+deployment:
+  hub:
+    branch: master
+    commands:
+      - ./build.sh latest
+      - docker build -t ictu/cloud-config-server .
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
+      - docker push ictu/cloud-config-server
