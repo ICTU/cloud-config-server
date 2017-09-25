@@ -1,24 +1,30 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
-	"strings"
-	"net/http"
-	"net"
-	"os"
 	"html/template"
-	"github.com/gorilla/mux"
+	"io/ioutil"
+	"net"
+	"net/http"
+	"os"
+	"strings"
+
 	"github.com/Sirupsen/logrus"
+	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v2"
-	"bytes"
 )
 
 var port = flag.Int("port", 3000, "tcp/ip port to listen on")
+var nfsIPPrefix = flag.String("nfs-ip-prefix", "192.168", "First two octets of nfs client ip")
 var workDir = flag.String("work-dir", ".", "Workspace directory containing templates and configs")
 
 func main() {
+	customFormatter := new(logrus.TextFormatter)
+	customFormatter.TimestampFormat = "2006-01-02 15:04:05"
+	customFormatter.FullTimestamp = true
+	logrus.SetFormatter(customFormatter)
 	flag.Parse()
 	logrus.Infof("ICTU CloudConfig Service started")
 	logrus.Infof("Listening on port: %v", *port)
@@ -33,12 +39,15 @@ func renderYaml(w http.ResponseWriter, r *http.Request) {
 	template := vars["environment"] + ".yml"
 	config := vars["environment"] + "-vars.yml"
 	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
+	octet := strings.Split(ip, ".")
+	nfsIP := fmt.Sprintf("%s.%s.%s", *nfsIPPrefix, octet[2], octet[3])
 	cnt, err := parseTemplate(template, config)
 	if err != nil {
 		logrus.Errorf("Failed to serve %v: %v", vars["environment"], err)
 		return
 	}
 	cnt = strings.Replace(cnt, "REMOTE_IP", ip, -1)
+	cnt = strings.Replace(cnt, "NFS_CLIENT_IP", nfsIP, -1)
 	fmt.Fprintf(w, cnt)
 	logrus.Infof("Served %s cloud-init to %s", vars["environment"], ip)
 }
@@ -50,15 +59,15 @@ func parseTemplate(pathTemplate string, pathConfig string) (content string, err 
 		return "", err
 	}
 	configMap := make(map[interface{}]interface{})
-  err = yaml.Unmarshal([]byte(string(config)), &configMap)
+	_ = yaml.Unmarshal([]byte(string(config)), &configMap)
 
-	t, err := template.ParseFiles(pathTemplate)
-	if err != nil {
-		return "", err
-	}
+	t := template.Must(template.ParseFiles(pathTemplate))
 
 	var doc bytes.Buffer
-	t.Execute(&doc, &configMap)
+	err = t.Execute(&doc, &configMap)
+	if err != nil {
+		logrus.Errorf("Failed to execute template: %s", err)
+	}
 	s := doc.String()
 
 	return s, nil
