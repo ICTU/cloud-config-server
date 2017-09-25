@@ -7,8 +7,7 @@ echo "Building cloud-config-server:$image_version"
 docker build --no-cache=true -t ictu/cloud-config-server:$image_version .
 
 echo "Pushing cloud-config-server:$image_version"
-#docker push ictu/cloud-config-server:$image_version
+docker push ictu/cloud-config-server:$image_version
 
 echo "Cleanup"
 rm -f cloud-config-server
-
