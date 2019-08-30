@@ -61,7 +61,11 @@ func parseTemplate(pathTemplate string, pathConfig string) (content string, err 
 	configMap := make(map[interface{}]interface{})
 	_ = yaml.Unmarshal([]byte(string(config)), &configMap)
 
-	t := template.Must(template.ParseFiles(pathTemplate))
+	fm := template.FuncMap{"substract": func(a, b int) int {
+		return a - b
+	}}
+
+	t := template.Must(template.New(pathTemplate).Funcs(fm).ParseFiles(pathTemplate))
 
 	var doc bytes.Buffer
 	err = t.Execute(&doc, &configMap)
