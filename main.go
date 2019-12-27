@@ -48,6 +48,7 @@ func renderYaml(w http.ResponseWriter, r *http.Request) {
 	}
 	cnt = strings.Replace(cnt, "REMOTE_IP", ip, -1)
 	cnt = strings.Replace(cnt, "NFS_CLIENT_IP", nfsIP, -1)
+  cnt = strings.Replace(cnt, "LAST_CLIENT_IP_OCTET", octet[3], -1) 
 	fmt.Fprintf(w, cnt)
 	logrus.Infof("Served %s cloud-init to %s", vars["environment"], ip)
 }

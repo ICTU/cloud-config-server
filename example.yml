@@ -4,7 +4,9 @@ write_files:
   - path: /home/user01/.bash_profile
     content: |
         export IP=REMOTE_IP
-        export ETCD_IP={{ .etcd.server_ip }}
+        export NFS_S_IP={{ .etcd.server_ip }}
+        export NFS_C_IP=NFS_CLIENT_IP
+        export NFS_C_IP_CALC=192.168.{{ substract .docker.network_name 3000 }}.LAST_CLIENT_IP_OCTET
   - path: /etc/resolv.conf
     content: |
         nameserver {{ .dns.dns1_server_ip }}
